@@ -27,8 +27,8 @@ Siga os passos abaixo para rodar o projeto localmente:
 ### 1. Clone o Repositório
 
 ```bash
-git clone https://github.com/seu-usuario/seu-repositorio.git
-cd seu-repositorio
+git clone https://github.com/daniel-santos92/IoT_api_exemple.git
+cd IoT_api_exemple
 ```
 
 ### 2. Crie um Ambiente Virtual
