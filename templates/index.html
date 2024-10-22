@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="pt-br">
 
 <head>
@@ -47,8 +46,22 @@
                 </div>
             </div>
 
-            <!-- Lista de contatos -->
+            <!-- Formulário de busca -->
             <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white text-center">
+                        Buscar Contatos
+                    </div>
+                    <div class="card-body">
+                        <input type="text" id="search-query" class="form-control mb-3"
+                            placeholder="Buscar por nome, telefone ou email">
+                        <button id="search-contacts-btn" class="btn btn-primary w-100 mb-3">Buscar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de contatos -->
+            <div class="col-md-12 mb-4">
                 <div class="card">
                     <div class="card-header bg-secondary text-white text-center">
                         Lista de Contatos
@@ -70,7 +83,7 @@
     <!-- Script para consumir a API -->
     <script>
         const apiKey = 'f6df37b5-50b1-4839-a88e-67554bc13625';
-        let isEditing = true;
+        let isEditing = false;
 
         // Função para enviar um novo contato ou atualizar um contato existente
         document.getElementById('contact-form').addEventListener('submit', function (event) {
@@ -90,13 +103,22 @@
                     },
                     body: JSON.stringify({ nome, telefone, email })
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            throw new Error('Erro na resposta do servidor');
+                        }
+                    })
                     .then(data => {
                         alert('Contato atualizado com sucesso!');
                         cancelEdit();
                         loadContacts();
                     })
-                    .catch(error => console.error('Erro ao atualizar contato:', error));
+                    .catch(error => {
+                        console.error('Erro ao atualizar contato:', error);
+                        alert('Erro ao atualizar contato');
+                    });
             } else {
                 // Adicionar novo contato (POST)
                 fetch('/contacts', {
@@ -107,15 +129,25 @@
                     },
                     body: JSON.stringify({ nome, telefone, email })
                 })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            throw new Error('Erro na resposta do servidor');
+                        }
+                    })
                     .then(data => {
                         alert('Contato adicionado com sucesso!');
                         document.getElementById('contact-form').reset();
                         loadContacts();
                     })
-                    .catch(error => console.error('Erro ao adicionar contato:', error));
+                    .catch(error => {
+                        console.error('Erro ao adicionar contato:', error);
+                        alert('Erro ao adicionar contato');
+                    });
             }
         });
+
 
         // Função para carregar contatos via GET
         document.getElementById('get-contacts-btn').addEventListener('click', function () {
@@ -192,6 +224,45 @@
                     .catch(error => console.error('Erro ao excluir contato:', error));
             }
         }
+
+        // Função de busca de contatos
+        document.getElementById('search-contacts-btn').addEventListener('click', function () {
+            const query = document.getElementById('search-query').value;
+
+            if (query) {
+                fetch(`/contacts/search?q=${query}`, {
+                    method: 'GET',
+                    headers: {
+                        'x-api-key': apiKey
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        const contactsList = document.getElementById('contacts-list');
+                        contactsList.innerHTML = ''; // Limpar a lista antes de adicionar
+
+                        if (data.length === 0) {
+                            contactsList.innerHTML = '<li class="list-group-item">Nenhum contato encontrado.</li>';
+                        } else {
+                            data.forEach(contact => {
+                                const li = document.createElement('li');
+                                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                                li.innerHTML = `
+                                    <span><strong>${contact.nome}</strong> - ${contact.telefone} - ${contact.email}</span>
+                                    <div>
+                                        <i class="fas fa-edit text-warning me-3" style="cursor:pointer;" onclick="editContact(${contact.id}, '${contact.nome}', '${contact.telefone}', '${contact.email}')"></i>
+                                        <i class="fas fa-trash-alt text-danger" style="cursor:pointer;" onclick="deleteContact(${contact.id})"></i>
+                                    </div>
+                                `;
+                                contactsList.appendChild(li);
+                            });
+                        }
+                    })
+                    .catch(error => console.error('Erro ao buscar contatos:', error));
+            } else {
+                alert('Por favor, insira um termo de busca.');
+            }
+        });
     </script>
 
 </body>

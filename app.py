@@ -63,6 +63,29 @@ def contact(id):
     elif request.method == "DELETE":
         # Deletar um contato por ID
         return delete_contact(id)
+    
+# Rota para busca de contatos por qualquer campo (nome, telefone ou email)
+@app.route('/contacts/search', methods=["GET"])
+@require_api_key
+def search_contacts():
+    query = request.args.get('q')
+    
+    if query:
+        conn = sqlite3.connect(DATABASE_PATH)
+        curs = conn.cursor()
+        search_query = f"%{query}%"
+        curs.execute("""
+            SELECT id, nome, telefone, email
+            FROM contatos
+            WHERE nome LIKE ? OR telefone LIKE ? OR email LIKE ?
+        """, (search_query, search_query, search_query))
+        result = curs.fetchall()
+        conn.close()
+        
+        items = [{'id': row[0], 'nome': row[1], 'telefone': row[2], 'email': row[3]} for row in result]
+        return jsonify(items)
+    else:
+        return jsonify({"message": "Parâmetro de busca não fornecido"}), 400
 
 # Funções de banco de dados
 def select_all_contacts():
